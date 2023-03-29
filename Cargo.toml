@@ -1,0 +1,13 @@
+[package]
+name = "oxide"
+description = "The Oxide Programming Language"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+oxygen = { path = "compiler/oxygen" }
+
+[workspace]
+members = [
+  "compiler/oxygen"
+]
