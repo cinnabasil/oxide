@@ -52,7 +52,20 @@ method_call_expression := expression '.' IDENT '(' call_params ')'
 function_call_expression := IDENT '(' call_params ')'
 call_params := expression (',' expression)*
 
-operator_expression := comparison_expression | negation_expression
+operator_expression := comparison_expression 
+                        | negation_expression 
+                        | arithmetic_expression 
+                        | boolean_expression
+
+arithmetic_expression := expression '+' expression
+                        | expression '-' expression
+                        | expression '*' expression
+                        | expression '/' expression
+                        | expression '&' expression
+                        | expression '|' expression
+
+boolean_expression := expression '||' expression
+                        | expression '&&' expression
 
 negation_expression := '-' expression | '!' expression
 
