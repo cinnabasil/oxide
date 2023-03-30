@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+oxygen_ast = { path = "../oxygen_ast" }
 oxygen_lexer = { path = "../oxygen_lexer" }
 oxygen_error = { path = "../oxygen_error" }

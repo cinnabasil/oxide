@@ -19,6 +19,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxygen_ast"
+version = "0.1.0"
+dependencies = [
+ "oxygen_lexer",
+]
+
+[[package]]
 name = "oxygen_error"
 version = "0.1.0"
 
@@ -37,6 +44,7 @@ version = "0.1.0"
 name = "oxygen_parser"
 version = "0.1.0"
 dependencies = [
+ "oxygen_ast",
  "oxygen_error",
  "oxygen_lexer",
 ]
