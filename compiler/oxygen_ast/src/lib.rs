@@ -4,6 +4,7 @@ pub type Ast = Vec<TopLevelItem>;
 
 pub type FunctionParameters = HashMap<String, Type>;
 
+#[derive(Debug)]
 pub enum Type {
     I32
 }
@@ -11,22 +12,28 @@ pub enum Type {
 // bool = can_error (`!`)
 pub type ReturnType = (Type, bool);
 
+#[derive(Debug)]
 pub enum TopLevelItem {
-    Function {
-        impure: bool,
-        name: String,
-        parameters: Option<FunctionParameters>,
-        return_type: Option<ReturnType>,
-        block: Option<Block>
-    }    
+    Function(Function)
+}
+
+#[derive(Debug)]
+pub struct Function {
+    pub impure: bool,
+    pub name: String,
+    pub parameters: Option<FunctionParameters>,
+    pub return_type: Option<ReturnType>,
+    pub block: Option<Block>
 }
 
 pub type Block = Vec<Statement>;
 
+#[derive(Debug)]
 pub enum Statement {
     Expression(Expression)
 }
 
+#[derive(Debug)]
 pub enum LiteralType {
     Integer(isize),
     Float(f64),
@@ -37,16 +44,17 @@ pub enum LiteralType {
 
 type CallParameters = Vec<Expression>;
 
+#[derive(Debug)]
 pub enum Expression {
     Literal(LiteralType),
     FunctionCall {
         name: String,
-        parameters: CallParameters
+        parameters: Option<CallParameters>
     },
     MethodCall {
         path: Box<Expression>,
         name: String,
-        parameters: CallParameters
+        parameters: Option<CallParameters>
     },
     Binary {
         left: Box<Expression>,
@@ -62,6 +70,7 @@ pub enum Expression {
     }
 }
 
+#[derive(Debug)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -71,6 +80,7 @@ pub enum BinaryOperator {
     Or
 }
 
+#[derive(Debug)]
 pub enum UnaryOperator {
     // -
     Negate,
