@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 
 use oxygen_error::Result;
-use oxygen_lexer::{tokenize, Tokenizer, Token, TokenKind, Keyword, LiteralKind};
+use oxygen_lexer::{tokenize, Tokenizer, Token, TokenKind, Keyword, LiteralKind, BinaryOperation};
 use oxygen_ast::*;
 
 struct Parser<'src> {
@@ -10,6 +10,7 @@ struct Parser<'src> {
 
 trait ParseableToken {
     fn should_be_kind(&self, kind: TokenKind) -> Result<()>;
+    fn get_precedence(&self) -> Precedence;
 }
 
 impl<'src> ParseableToken for Token<'src> {
@@ -20,7 +21,30 @@ impl<'src> ParseableToken for Token<'src> {
 
         Ok(())
     }
+
+    fn get_precedence(&self) -> Precedence {
+        match &self.kind {
+            TokenKind::Eq | TokenKind::BinOpEq(_) => {
+                Precedence::Assign
+            },
+            TokenKind::BinOp(b) => {
+                match b {
+                    BinaryOperation::Plus | BinaryOperation::Minus => Precedence::Sum,
+                    BinaryOperation::Star | BinaryOperation::Slash => Precedence::Product,
+                    BinaryOperation::And => Precedence::BitAnd,
+                    BinaryOperation::Or => Precedence::BitOr
+                }
+            },
+            TokenKind::EqEq | TokenKind::NotEq => Precedence::Equality,
+            TokenKind::Greater | TokenKind::GreaterEq | TokenKind::Less | TokenKind::LessEq =>
+                Precedence::Comparison,
+            TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::OpenCurly =>
+                Precedence::Call,
+            _ => Precedence::None
+        }
+    }
 }
+
 
 impl<'src> Parser<'src> {
     fn new(input: &'src str) -> Self {
@@ -70,6 +94,16 @@ impl<'src> Parser<'src> {
         };
 
         match &next.kind {
+            TokenKind::BinOp(BinaryOperation::Minus) => {
+                // Labelled as binary operation in tokenizer,
+                // but actually they are used as unary operations here
+                self.tokenizer.next();
+                Ok(Expression::Unary { operator: UnaryOperator::Negate, right: Box::new(self.parse_expression()?) })
+            },
+            TokenKind::Bang => {
+                self.tokenizer.next();
+                Ok(Expression::Unary { operator: UnaryOperator::Not, right: Box::new(self.parse_expression()?) })
+            },
             TokenKind::Identifier => {
                 // Either ident on its own:
                 //      x, y, x. etc
@@ -78,7 +112,9 @@ impl<'src> Parser<'src> {
                 
                 let identifier = self.tokenizer.next().unwrap();
                 let Some(next) = self.tokenizer.peek() else {
-                    todo!("return an identifier on its own once we add variables as expressions");
+                    return Ok(
+                        Expression::Ident(identifier.string.to_string())
+                    );
                 };
 
                 match next.kind {
@@ -109,7 +145,9 @@ impl<'src> Parser<'src> {
                         )
                     },
                     _ => {
-                        todo!("return an identifier on its own once we add variables as expressions");
+                        Ok(
+                            Expression::Ident(identifier.string.to_string())
+                        )
                     }
                 } 
             },
@@ -128,6 +166,19 @@ impl<'src> Parser<'src> {
                     },
                     _ => todo!("Handle other literal kinds")
                 } 
+            },
+            TokenKind::Keyword(k) => {
+                match k {
+                    Keyword::If => {
+                        self.tokenizer.next();
+                        let condition = Box::new(self.parse_expression()?);
+
+                        let block = self.parse_block()?;
+
+                        Ok(Expression::IfExpression { condition, block })
+                    },
+                    _ => todo!("Handle error: 'can't start expression with {k:?}'")
+                }
             },
             _ => {
                 todo!("Handle error: 'can't start expression with {:?}'", next.kind); 

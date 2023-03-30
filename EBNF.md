@@ -45,6 +45,9 @@ expression_without_block := literal_expression
                             | function_call_expression 
                             | method_call_expression
                             | operator_expression
+                            | identifier_expression
+
+identifier_expression := IDENT
 
 literal_expression := INTEGER_LIT | FLOAT_LIT | STRING_LIT | 'true' | 'false'
 
