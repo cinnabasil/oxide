@@ -37,6 +37,33 @@ impl<'src> Parser<'src> {
         Ok(token)
     }
 
+    fn parse_call_params(&mut self) -> Result<CallParameters> {
+        let mut params = CallParameters::new();
+        
+        'parse_params: loop {
+            let expr = self.parse_expression()?;
+
+            params.push(expr);
+
+            let Some(next) = self.tokenizer.peek() else {
+                // The end of the file is technically
+                // not a comma, so we return params, since
+                // it's not parse_call_params' job to 
+                // do anything other than parse the parameters.
+                return Ok(params);
+            };
+
+            match next.kind {
+                TokenKind::Comma => {
+                    self.tokenizer.next();
+                },
+                _ => break 'parse_params
+            };
+        };
+
+        return Ok(params);
+    }
+
     fn parse_expression(&mut self) -> Result<Expression> {
         let Some(next) = self.tokenizer.peek() else {
             todo!("Handle error: 'expected expression but no more tokens'");
@@ -58,12 +85,26 @@ impl<'src> Parser<'src> {
                     TokenKind::OpenParen => {
                         // Function call
                         self.tokenizer.next().unwrap();
+
+                        let Some(close_paren_or_arg) = self.tokenizer.peek() else {
+                            todo!("Handle error: 'expected close of function call or arguments but no more tokens'");
+                        };
+
+                        let mut parameters: Option<CallParameters> = None;
+
+                        match close_paren_or_arg.kind {
+                            TokenKind::CloseParen => {},
+                            _ => {
+                                parameters = Some(self.parse_call_params()?);
+                            }
+                        }
+
                         self.get_next_token_or_error()?.should_be_kind(TokenKind::CloseParen)?;
 
                         Ok(
                             Expression::FunctionCall { 
                                 name: identifier.string.to_string(), 
-                                parameters: None
+                                parameters
                             }
                         )
                     },

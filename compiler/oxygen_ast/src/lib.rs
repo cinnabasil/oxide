@@ -42,7 +42,7 @@ pub enum LiteralType {
     False
 }
 
-type CallParameters = Vec<Expression>;
+pub type CallParameters = Vec<Expression>;
 
 #[derive(Debug)]
 pub enum Expression {
