@@ -18,6 +18,7 @@ any amount (including 0) of x
 
 ## EBNF
 
+```ebnf
 program := top_level_item*
 
 top_level_item := function
@@ -65,3 +66,4 @@ comparison_expression := expression '==' expression
 expression_with_block := if_expression
 
 if_expression := 'if' expression block_expression ('else' (block_expression | if_expression) )?
+```
