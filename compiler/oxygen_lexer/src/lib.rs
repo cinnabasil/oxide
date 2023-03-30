@@ -58,12 +58,19 @@ pub enum LiteralKind {
 }
 
 #[derive(PartialEq, Debug)]
+pub enum Keyword {
+    Impure,
+    Func
+}
+
+#[derive(PartialEq, Debug)]
 pub enum TokenKind {
     Eof,
 
     Comment,
 
     Identifier,
+    Keyword(Keyword),
     Literal{ kind: LiteralKind, suffix_start: usize },
 
     Greater,
@@ -334,7 +341,11 @@ impl<'src> TokenStream<'src> {
 
             c if is_ident_start(c) => {
                 self.advance_while(is_ident_continue);
-                Identifier
+                match &self.src.clone()[start_idx..self.idx] {
+                    "func" => Keyword(Keyword::Func),
+                    "impure" => Keyword(Keyword::Impure),
+                    _ => Identifier
+                }
             },
 
             c @ '0'..='9' => {

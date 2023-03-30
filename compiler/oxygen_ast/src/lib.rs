@@ -15,9 +15,9 @@ pub enum TopLevelItem {
     Function {
         impure: bool,
         name: String,
-        parameters: FunctionParameters,
-        return_type: ReturnType,
-        block: Block
+        parameters: Option<FunctionParameters>,
+        return_type: Option<ReturnType>,
+        block: Option<Block>
     }    
 }
 
