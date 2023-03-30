@@ -59,8 +59,11 @@ pub enum LiteralKind {
 
 #[derive(PartialEq, Debug)]
 pub enum Keyword {
+    If,
     Impure,
-    Func
+    Func,
+
+    I32
 }
 
 #[derive(PartialEq, Debug)]
@@ -342,8 +345,14 @@ impl<'src> TokenStream<'src> {
             c if is_ident_start(c) => {
                 self.advance_while(is_ident_continue);
                 match &self.src.clone()[start_idx..self.idx] {
+                    // Keywords
+                    "if" => Keyword(Keyword::If),
                     "func" => Keyword(Keyword::Func),
                     "impure" => Keyword(Keyword::Impure),
+
+                    // Types
+                    "i32" => Keyword(Keyword::I32),
+
                     _ => Identifier
                 }
             },

@@ -166,22 +166,117 @@ impl<'src> Parser<'src> {
         Ok(block)
     }
 
+    #[allow(dead_code)]
+    fn parse_return_type(&mut self) -> Result<ReturnType> {
+        let r#type = self.parse_type()?;
+        
+        match self.tokenizer.peek() {
+            Some(t) => {
+                match t.kind {
+                    TokenKind::Bang => {
+                        self.tokenizer.next();
+                        return Ok((r#type, true));
+                    },
+                    _ => return Ok((r#type, false))
+                }
+            },
+            None => return Ok((r#type, false))
+        }
+    }
+
+    fn parse_type(&mut self) -> Result<Type> {
+        // Only handle compiler types for now, but
+        // later on we want to be able to have user
+        // defined types!
+         
+        match self.tokenizer.next() {
+            Some(t) => {
+                match &t.kind {
+                    TokenKind::Keyword(k) => {
+                        match k {
+                            Keyword::I32 => Ok(Type::I32),
+                            _ => todo!("Handle error: 'expected type but got {k:?}'")
+                        }
+                    },
+                    k => {
+                        todo!("Handle error: 'expected type but got {k:?}'");
+                    }
+                }
+            },
+            None => todo!("Handle error: 'expected type but no more tokens'")
+        }
+    }
+
+    fn parse_function_parameters(&mut self) -> Result<FunctionParameters> {
+        let mut params = FunctionParameters::new();
+        
+        'parse_params: loop {
+            let r#type = self.parse_type()?; 
+
+            let identifier = self.get_next_token_or_error()?;
+            identifier.should_be_kind(TokenKind::Identifier)?;
+
+            if let Some(v) = params.insert(identifier.string.to_string(), r#type) {
+                todo!("Handle error: 'Tried to define the parameter {} again (was defined as {v:?})'",
+                    identifier.string);
+            }
+
+            match self.tokenizer.peek() {
+                Some(t) => {
+                    match &t.kind {
+                        TokenKind::Comma => {
+                            self.tokenizer.next();
+                        },
+                        _ => break 'parse_params
+                    }
+                },
+                None => break 'parse_params
+            }
+        };
+
+        return Ok(params);
+    }
+
     fn parse_function_definition(&mut self) -> Result<Function> {
         // Starts with next token being the identifier
         let identifier = self.get_next_token_or_error()?;
         identifier.should_be_kind(TokenKind::Identifier)?;
 
         self.get_next_token_or_error()?.should_be_kind(TokenKind::OpenParen)?;
-        // TODO: Handle function definition arguments
+        
+        let mut parameters: Option<FunctionParameters> = None;
+
+        match self.tokenizer.peek().unwrap_or_else(|| {
+            todo!("Handle error: 'expected function def params or block, but no more tokens'");
+        }).kind {
+            TokenKind::CloseParen => {},
+            _ => {
+                parameters = Some(self.parse_function_parameters()?);
+            }
+        }
+
         self.get_next_token_or_error()?.should_be_kind(TokenKind::CloseParen)?;
 
         let mut function = Function {
             impure: false,
             name: identifier.string.to_string(),
-            parameters: None,
+            parameters,
             return_type: None,
             block: None
         };
+        // We need to do this match twice:
+        // 1. Handle a return type
+        // 2. Handle either `;` or `{}`
+        match self.tokenizer.peek().unwrap_or_else(|| {
+            todo!("Handle error: 'function definition not followed by anything'"); 
+        }).kind {
+            TokenKind::Tilde => {
+                self.tokenizer.next();
+                let r#type = self.parse_return_type()?;
+                function.return_type = Some(r#type);
+            },
+            _ => {}
+        }
 
         match self.tokenizer.peek().unwrap_or_else(|| {
             todo!("Handle error: 'function definition not followed by anything'"); 
@@ -198,13 +293,13 @@ impl<'src> Parser<'src> {
         match token.kind {
             TokenKind::Keyword(kw) => {
                 match kw {
-                    Keyword::Impure => {
-                        todo!("Handle keyword 'impure'");
-                    },
                     Keyword::Func => {
                         Ok(TopLevelItem::Function(
                             self.parse_function_definition()?
                         ))
+                    }
+                    _ => {
+                        todo!("Handle keyword {kw:?}");
                     }
                 }
             },
