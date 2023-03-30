@@ -14,8 +14,8 @@ name = "oxygen"
 version = "0.1.0"
 dependencies = [
  "oxygen_error",
- "oxygen_lexer",
  "oxygen_options",
+ "oxygen_parser",
 ]
 
 [[package]]
@@ -32,3 +32,11 @@ dependencies = [
 [[package]]
 name = "oxygen_options"
 version = "0.1.0"
+
+[[package]]
+name = "oxygen_parser"
+version = "0.1.0"
+dependencies = [
+ "oxygen_error",
+ "oxygen_lexer",
+]

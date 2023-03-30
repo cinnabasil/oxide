@@ -1,6 +1,6 @@
 use oxygen_error::{ early_error, Result };
 use oxygen_options::Options;
-use oxygen_lexer::tokenize;
+use oxygen_parser::parse;
 
 fn usage() {
     println!("Usage: oxygen [OPTIONS] <input>");
@@ -52,9 +52,8 @@ pub fn run_compiler(arguments: Vec<String>) -> Result<()> {
     let Some(options) = handle_arguments(&arguments)? else { return Ok(()) };
 
     let src = std::fs::read_to_string(options.input_path).unwrap();
-    for token in tokenize(&src) {
-        println!("{token:?}");
-    }
+
+    parse(&src)?;
 
     Ok(())
 }

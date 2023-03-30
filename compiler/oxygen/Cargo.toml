@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 oxygen_error = { path = "../oxygen_error" }
 oxygen_options = { path = "../oxygen_options" }
-oxygen_lexer = { path = "../oxygen_lexer" }
+oxygen_parser = { path = "../oxygen_parser" }
